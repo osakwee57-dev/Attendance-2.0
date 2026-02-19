@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Custom styles from index.html */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 10px;
+}
+
+input[type="text"], 
+input[type="number"], 
+input[type="password"],
+select {
+  color: #000000 !important; 
+  font-weight: 500;
+}
+
+.signature-wrapper {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  background: #fafafa;
+  margin: 15px 0;
+}
+
+.sig-img {
+  height: 40px;
+  width: auto;
+  border: 1px solid #eee;
+  background: #fff;
+}

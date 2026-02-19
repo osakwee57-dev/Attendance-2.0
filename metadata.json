@@ -1,0 +1,7 @@
+{
+  "name": "Faculty of Engineering Student Portal",
+  "description": "A comprehensive student registration and management portal for engineering students, featuring signature capture and a Gemini-powered registrar assistant.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
