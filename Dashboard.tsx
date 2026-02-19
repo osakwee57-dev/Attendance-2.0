@@ -232,6 +232,7 @@ export const HocDashboard: React.FC = () => {
   const [message, setMessage] = useState('');
   const [isStarting, setIsStarting] = useState(false);
   const [isUpdatingLevel, setIsUpdatingLevel] = useState(false);
+  const [sessionFinished, setSessionFinished] = useState(false);
 
   const filteredList = useMemo(() => {
     return fullClassList.filter(student => 
@@ -360,8 +361,8 @@ export const HocDashboard: React.FC = () => {
       console.error("Error stopping session:", error);
       alert("Failed to stop session. Check console.");
     } else {
-      setActiveSession(null);
-      setAttendees([]);
+      setSessionFinished(true);
+      alert("Session stopped! You can now export the final list.");
     }
   };
 
@@ -470,7 +471,7 @@ export const HocDashboard: React.FC = () => {
       {view === 'live' ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-1 space-y-6">
-            {!activeSession ? (
+            {!activeSession && !sessionFinished ? (
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <h3 className="font-bold text-slate-800 mb-4">Start New Session</h3>
                 <div className="space-y-4">
@@ -497,29 +498,53 @@ export const HocDashboard: React.FC = () => {
               <div className="bg-blue-600 p-6 rounded-2xl shadow-xl text-white space-y-6">
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-blue-200">Tracking Active</span>
-                    <span className="flex h-2 w-2 rounded-full bg-red-400 animate-pulse"></span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-blue-200">
+                      {sessionFinished ? 'Session Ended' : 'Tracking Active'}
+                    </span>
+                    <span className={`flex h-2 w-2 rounded-full ${sessionFinished ? 'bg-slate-400' : 'bg-red-400 animate-pulse'}`}></span>
                   </div>
                   <h2 className="text-3xl font-black">{activeSession.course_code}</h2>
                 </div>
-                <div className="bg-blue-700/50 p-6 rounded-2xl border border-blue-400/30 text-center shadow-inner">
-                  <span className="block text-[10px] font-bold uppercase tracking-[0.2em] text-blue-200 mb-2">Access Passcode</span>
-                  <div className="text-5xl font-mono font-black tracking-widest">{activeSession.passcode}</div>
-                </div>
+                
+                {!sessionFinished && (
+                  <div className="bg-blue-700/50 p-6 rounded-2xl border border-blue-400/30 text-center shadow-inner">
+                    <span className="block text-[10px] font-bold uppercase tracking-[0.2em] text-blue-200 mb-2">Access Passcode</span>
+                    <div className="text-5xl font-mono font-black tracking-widest">{activeSession.passcode}</div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 gap-3 pt-2">
                   <button 
                     onClick={exportLiveSessionToPDF} 
                     className="w-full py-3 bg-white text-blue-600 font-bold rounded-xl text-xs flex items-center justify-center gap-2 hover:bg-blue-50 transition-all active:scale-95"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                    Export Live List to PDF
+                    Export Final List to PDF
                   </button>
-                  <button onClick={copyShareLink} className="w-full py-3 bg-blue-500/50 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 hover:bg-blue-400/50">
-                    Copy Shareable Link
-                  </button>
-                  <button onClick={stopSession} className="w-full py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl text-xs transition-all active:scale-95">
-                    Stop Session
-                  </button>
+                  
+                  {!sessionFinished && (
+                    <>
+                      <button onClick={copyShareLink} className="w-full py-3 bg-blue-500/50 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 hover:bg-blue-400/50">
+                        Copy Shareable Link
+                      </button>
+                      <button onClick={stopSession} className="w-full py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl text-xs transition-all active:scale-95">
+                        Stop Session
+                      </button>
+                    </>
+                  )}
+
+                  {sessionFinished && (
+                    <button 
+                      onClick={() => {
+                        setActiveSession(null);
+                        setAttendees([]);
+                        setSessionFinished(false);
+                      }} 
+                      className="w-full py-3 bg-blue-800 text-white font-bold rounded-xl text-xs transition-all active:scale-95"
+                    >
+                      Start New Session
+                    </button>
+                  )}
                 </div>
               </div>
             )}
