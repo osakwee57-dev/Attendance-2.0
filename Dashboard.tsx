@@ -92,7 +92,8 @@ export const StudentDashboard: React.FC = () => {
         .from('attendance_logs')
         .insert([{ 
           session_id: session.id, 
-          student_matric: user.matric_number 
+          student_matric: user.matric_number,
+          signature_data: user.signature_data
         }]);
 
       if (logError) {
@@ -273,6 +274,7 @@ export const HocDashboard: React.FC = () => {
         .select(`
           student_matric,
           created_at,
+          signature_data,
           users:student_matric (full_name, signature_data)
         `)
         .eq('session_id', activeSession.id)
@@ -317,7 +319,8 @@ export const HocDashboard: React.FC = () => {
       await supabase.from('attendance_logs').insert([
         { 
           session_id: session.id, 
-          student_matric: user.matric_number 
+          student_matric: user.matric_number,
+          signature_data: user.signature_data
         }
       ]);
       
@@ -415,7 +418,7 @@ export const HocDashboard: React.FC = () => {
         // Embed signature image if it's the 'Signature' column
         if (data.section === 'body' && data.column.index === 3) {
           const attendee = attendees[data.row.index];
-          const signature = attendee.users?.signature_data;
+          const signature = attendee.signature_data || attendee.users?.signature_data;
           if (signature) {
             try {
               // Add student's digital signature directly to the cell
@@ -597,8 +600,8 @@ export const HocDashboard: React.FC = () => {
                           <td className="px-6 py-4 text-sm font-bold text-slate-800 uppercase leading-tight">{a.users?.full_name || 'HOC Member'}</td>
                           <td className="px-6 py-4 text-sm text-slate-600 font-mono tracking-tighter">{a.student_matric}</td>
                           <td className="px-6 py-4">
-                            {a.users?.signature_data && (
-                               <img src={a.users.signature_data} className="h-6 w-auto opacity-70 hover:opacity-100 transition-opacity" alt="Sign" />
+                            {(a.signature_data || a.users?.signature_data) && (
+                               <img src={a.signature_data || a.users.signature_data} className="h-6 w-auto opacity-70 hover:opacity-100 transition-opacity" alt="Sign" />
                             )}
                           </td>
                           <td className="px-6 py-4 text-xs text-slate-400 text-right font-medium">
