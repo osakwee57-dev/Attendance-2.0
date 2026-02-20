@@ -316,7 +316,6 @@ export const HocDashboard: React.FC = () => {
         .select().single();
 
       if (error) throw error;
-      setActiveSession(session);
       
       // IMMEDIATELY add the HOC to the attendance log
       await supabase.from('attendance_logs').insert([
@@ -327,6 +326,7 @@ export const HocDashboard: React.FC = () => {
         }
       ]);
       
+      setActiveSession(session);
       alert("Session Started! You have been added to the list as the first attendee.");
       setMessage('');
       setCourseCode('');
@@ -367,6 +367,7 @@ export const HocDashboard: React.FC = () => {
       console.error("Error stopping session:", error);
       alert("Failed to stop session. Check console.");
     } else {
+      setActiveSession({ ...activeSession, is_active: false });
       setSessionFinished(true);
       alert("Session stopped! You can now export the final list.");
     }
@@ -534,7 +535,7 @@ export const HocDashboard: React.FC = () => {
                     Export Final List to PDF
                   </button>
                   
-                  {!sessionFinished && (
+                  {!sessionFinished && activeSession.is_active && (
                     <>
                       <button onClick={copyShareLink} className="w-full py-3 bg-blue-500/50 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 hover:bg-blue-400/50">
                         Copy Shareable Link
