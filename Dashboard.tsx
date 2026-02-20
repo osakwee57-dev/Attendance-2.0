@@ -268,52 +268,42 @@ export const HocDashboard: React.FC = () => {
   useEffect(() => {
     if (!activeSession) return;
 
-    const getAttendanceData = async () => {
-      // We fetch from the log table, but manually 'join' the user table
+    const fetchAttendance = async () => {
       const { data, error } = await supabase
         .from('attendance_logs')
         .select(`
-          student_matric,
           signature_data,
           created_at,
-          users!inner (
-            full_name,
-            matric_number
-          )
+          users (full_name, matric_number)
         `)
         .eq('session_id', activeSession.id)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error("Fetch Error:", error);
-      } else {
-        // Flatten the data so 'full_name' is easy to access
-        const formattedData = data.map((item: any) => {
+      if (!error && data) {
+        // Flattening the data so the table can read it easily
+        const list = data.map((item: any) => {
           const userData = Array.isArray(item.users) ? item.users[0] : item.users;
           return {
-            full_name: userData?.full_name || 'HOC Member',
-            matric_number: item.student_matric || userData?.matric_number,
-            signature_data: item.signature_data,
+            name: userData?.full_name || 'HOC Member',
+            matric: userData?.matric_number || 'N/A',
+            sig: item.signature_data,
             created_at: item.created_at
           };
         });
-        setAttendees(formattedData);
+        setAttendees(list);
+      } else if (error) {
+        console.error("Fetch Error:", error);
       }
     };
 
-    getAttendanceData();
+    fetchAttendance();
 
-    // Listen for NEW sign-ins
-    const channel = supabase
-      .channel('attendance_updates')
+    // Listen for real-time sign-ins
+    const channel = supabase.channel(`session-${activeSession.id}`)
       .on('postgres_changes', 
         { event: 'INSERT', schema: 'public', table: 'attendance_logs', filter: `session_id=eq.${activeSession.id}` }, 
-        () => {
-          console.log("New student signed! Refreshing...");
-          getAttendanceData(); // Trigger a fresh fetch
-        }
-      )
-      .subscribe();
+        () => fetchAttendance()
+      ).subscribe();
 
     return () => {
       supabase.removeChannel(channel);
@@ -427,8 +417,8 @@ export const HocDashboard: React.FC = () => {
       head: [['S/N', 'Matric Number', 'Full Name', 'Signature', 'Time Signed']],
       body: attendees.map((a, index) => [
         index + 1,
-        a.matric_number || a.student_matric, 
-        a.full_name, 
+        a.matric, 
+        a.name.toUpperCase(), 
         '', // Placeholder for signature image
         new Date(a.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       ]),
@@ -444,7 +434,7 @@ export const HocDashboard: React.FC = () => {
         // Embed signature image if it's the 'Signature' column
         if (data.section === 'body' && data.column.index === 3) {
           const attendee = attendees[data.row.index];
-          const signature = attendee.signature_data;
+          const signature = attendee.sig;
           if (signature) {
             try {
               // Add student's digital signature directly to the cell
@@ -623,11 +613,11 @@ export const HocDashboard: React.FC = () => {
                     <tbody className="divide-y divide-slate-100">
                       {attendees.map((a, i) => (
                         <tr key={i} className="hover:bg-blue-50/30 transition-colors animate-in slide-in-from-top-1">
-                          <td className="px-6 py-4 text-sm font-bold text-slate-800 uppercase leading-tight">{a.full_name}</td>
-                          <td className="px-6 py-4 text-sm text-slate-600 font-mono tracking-tighter">{a.matric_number || a.student_matric}</td>
+                          <td className="px-6 py-4 text-sm font-bold text-slate-800 uppercase leading-tight">{a.name}</td>
+                          <td className="px-6 py-4 text-sm text-slate-600 font-mono tracking-tighter">{a.matric}</td>
                           <td className="px-6 py-4">
-                            {a.signature_data && (
-                               <img src={a.signature_data} className="h-6 w-auto opacity-70 hover:opacity-100 transition-opacity" alt="Sign" />
+                            {a.sig && (
+                               <img src={a.sig} className="h-6 w-auto opacity-70 hover:opacity-100 transition-opacity" alt="Sign" />
                             )}
                           </td>
                           <td className="px-6 py-4 text-xs text-slate-400 text-right font-medium">
